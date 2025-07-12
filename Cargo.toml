@@ -1,0 +1,16 @@
+[package]
+name = "tidal"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+base64 = "0.22.1"
+rand = "0.9.1"
+reqwest = { version = "0.12.22", features = ["rustls-tls"] }
+tokio = "1"
+sha2 = "0.10.9"
+chrono = { version = "0.4.41", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2.0.12"
+bitflags = "2.9.1"
