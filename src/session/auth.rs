@@ -1,9 +1,12 @@
-use std::{collections::HashMap, fmt::Display, mem, str::FromStr};
+use std::{collections::HashMap, fmt::Display, mem, str::FromStr, time};
 use thiserror::Error;
 
 use chrono;
 use serde::{Deserialize, Serialize};
-use tokio::time;
+// use tokio::time;
+// use async_std::time;
+// use async_std::
+use smol::{Timer, stream::StreamExt};
 
 use crate::request::{self, Request, RequestError};
 
@@ -95,7 +98,7 @@ pub struct OAuthUrl {
     pub user_code: String,
     pub device_code: String,
     pub verification_uri: String,
-    pub interval: time::Interval,
+    pub interval: Timer,
     pub expiry: chrono::DateTime<chrono::Utc>,
 }
 #[derive(Deserialize)]
@@ -120,7 +123,6 @@ pub async fn refresh_oauth_token(request: &Request, oauth: &mut OAuth) -> Result
         .await
         .map_err(|_| AuthError::RefreshTokenExpired)?;
 
-    // if response.status()c
     let refresh_resp: RefreshResponse = match response.status() {
         x if x >= 300 || x < 200 => Err(AuthError::Authentication)?,
         _ => response.json().await?,
@@ -142,7 +144,7 @@ pub async fn request_oauth_url(request: &Request) -> Result<OAuthUrl, AuthError>
     let resp = request.post(request::API_OAUTH2_DEV_AUTH_URL, form).await?;
 
     let response: OAuthUrlResponse = resp.json().await?;
-    let interval = time::interval(time::Duration::from_secs(response.interval));
+    let interval = Timer::interval(time::Duration::from_secs(response.interval));
     let expiry = chrono::Utc::now() + chrono::Duration::seconds(response.expires_in);
 
     Ok(OAuthUrl {
@@ -168,7 +170,7 @@ pub async fn process_oauth_url(
     ];
 
     while chrono::Utc::now() < oauth_url.expiry {
-        oauth_url.interval.tick().await;
+        oauth_url.interval.next().await;
         let response = request.post(url, params).await?;
         match response.is_ok() {
             true => {

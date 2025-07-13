@@ -16,7 +16,21 @@ pub(super) const API_OAUTH2_DEV_AUTH_URL: &str =
 pub const API_OAUTH2_URL: &str = "https://auth.tidal.com/v1/oauth2/token";
 pub const CLIENT_ID: &str = "zU4XHVVkc2tDPo4t";
 pub const CLIENT_SECRET: &str = "VJKhDFqJPqvsPVNBV6ukXTJmwlvbttP7wlMlrc72se4=";
-pub const API_V1_URL: &str = "https://api.tidal.com/v1";
+pub const API_URL: &str = "https://api.tidal.com";
+
+#[derive(Copy, Clone, Debug)]
+pub enum ApiVersion {
+    V1,
+    V2,
+}
+impl Display for ApiVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApiVersion::V1 => write!(f, "v1"),
+            ApiVersion::V2 => write!(f, "v2"),
+        }
+    }
+}
 
 #[derive(Error)]
 pub enum RequestError {
@@ -89,6 +103,7 @@ impl Request {
         query: &[(&str, &str)],
         oauth: &mut OAuth,
         info: Option<&Info>,
+        api_version: ApiVersion,
     ) -> Result<Response, RequestError> {
         // helper function
         async fn send(
@@ -97,10 +112,11 @@ impl Request {
             query: &[(&str, &str)],
             oauth: &mut OAuth,
             info_query: &[(&str, &str)],
+            api_version: ApiVersion,
         ) -> Result<reqwest::Response, RequestError> {
             let resp = client
                 .client
-                .get(&format!("{API_V1_URL}/{path}"))
+                .get(&format!("{API_URL}/{api_version}/{path}"))
                 .query(query)
                 .query(info_query)
                 .header(header::USER_AGENT, USER_AGENT)
@@ -122,7 +138,7 @@ impl Request {
         } else {
             &[]
         };
-        let mut response = send(self, path, query, oauth, info_query).await?;
+        let mut response = send(self, path, query, oauth, info_query, api_version).await?;
 
         // refresh token and retry if token is expired
         // @todo: check if the expired token really is the cause and not something else
@@ -131,7 +147,7 @@ impl Request {
                 .await
                 .map_err(|_| RequestError::Authentification)?;
 
-            response = send(self, path, query, oauth, info_query).await?;
+            response = send(self, path, query, oauth, info_query, api_version).await?;
         }
 
         Ok(Response(response))

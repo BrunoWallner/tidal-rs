@@ -1,9 +1,11 @@
 mod album;
-pub mod artist;
-pub mod track;
+mod artist;
+mod stream;
+mod track;
 
 pub use album::*;
 pub use artist::*;
+pub use stream::*;
 pub use track::*;
 
 pub type Id = u64;
@@ -13,6 +15,46 @@ use serde::{
     de::{self, Error, Unexpected, Visitor},
 };
 use std::fmt;
+
+// pub enum MimeType {
+//     AudioMpeg,
+//     AudioMp3,
+//     AudioMp4,
+//     AudioM4a,
+//     AudioFlac,
+//     AudioXflac,
+//     Audioeac3,
+//     AudioAc4,
+//     AudioM3u8,
+//     VideoMp4,
+//     VideoM38u,
+// }
+
+#[derive(Clone, Debug, Deserialize)]
+pub enum MimeType {
+    #[serde(rename = "audio/mpeg")]
+    AudioMpeg,
+    #[serde(rename = "audio/mp3")]
+    AudioMp3,
+    #[serde(rename = "audio/mp4")]
+    AudioMp4,
+    #[serde(rename = "audio/m4a")]
+    AudioM4a,
+    #[serde(rename = "audio/flac")]
+    AudioFlac,
+    #[serde(rename = "audio/x-flac")]
+    AudioXflac,
+    #[serde(rename = "audio/eac3")]
+    Audioeac3,
+    #[serde(rename = "audio/ac4")]
+    AudioAc4,
+    #[serde(rename = "audio/m3u8")]
+    AudioM3u8,
+    #[serde(rename = "video/mp4")]
+    VideoMp4,
+    #[serde(rename = "video/m38u")]
+    VideoM38u,
+}
 
 #[derive(Copy, Clone, Debug)]
 pub struct Color {

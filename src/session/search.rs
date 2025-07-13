@@ -6,6 +6,7 @@ use serde::Deserialize;
 use crate::{
     Session,
     media::{Album, Artist, Track},
+    request::ApiVersion,
     session::SessionError,
 };
 
@@ -64,6 +65,22 @@ pub struct SearchResult {
     pub albums: Option<SearchResultType<Album>>,
     pub tracks: Option<SearchResultType<Track>>,
 }
+impl SearchResult {
+    // set field to None, if it does not cotain any items
+    fn normalize(&mut self) {
+        fn normalize_field<T>(field: &mut Option<SearchResultType<T>>) {
+            if let Some(inner) = field {
+                if inner.total_number_of_items == 0 {
+                    *field = None;
+                }
+            }
+        }
+
+        normalize_field(&mut self.artists);
+        normalize_field(&mut self.albums);
+        normalize_field(&mut self.tracks);
+    }
+}
 
 impl Session {
     pub async fn search(
@@ -73,9 +90,6 @@ impl Session {
         limit: u32,
         offset: u32,
     ) -> Result<SearchResult, SessionError> {
-        let Some(oauth) = &mut self.oauth else {
-            Err(SessionError::NotLoggedInOauth)?
-        };
         let params = &[
             ("query", query),
             ("limit", &format!("{limit}")),
@@ -83,12 +97,10 @@ impl Session {
             ("types", &format!("{models}")),
         ];
 
-        let resp = self
-            .client
-            .tidal_request("search", params, oauth, self.info.as_ref())
-            .await?;
+        let resp = self.request("search", params, ApiVersion::V1).await?;
 
-        let result: SearchResult = resp.json().await?;
+        let mut result: SearchResult = resp.json().await?;
+        result.normalize();
         Ok(result)
     }
 }

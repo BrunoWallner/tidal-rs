@@ -1,5 +1,8 @@
 pub mod media;
-pub(crate) mod request;
-pub mod session;
+mod request;
+mod session;
 
-pub use session::Session;
+// pub use session::{Session, Config};
+pub use session::*;
+
+pub use request::{ApiVersion, Response};

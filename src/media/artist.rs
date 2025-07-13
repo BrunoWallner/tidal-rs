@@ -1,6 +1,24 @@
+use crate::{Session, media::Id, request::ApiVersion, session::SessionError};
 use serde::Deserialize;
 
-use crate::{Session, media::Id, session::SessionError};
+pub trait IntoArtistId {
+    fn into_artist_id(&self) -> Id;
+}
+impl IntoArtistId for Id {
+    fn into_artist_id(&self) -> Id {
+        *self
+    }
+}
+
+/// Artist extension
+impl Session {
+    pub async fn get_artist<I: IntoArtistId>(&mut self, id: &I) -> Result<Artist, SessionError> {
+        let path = format!("artists/{}", id.into_artist_id());
+        let resp = self.request(&path, &[], ApiVersion::V1).await?;
+        let artist: Artist = resp.json().await?;
+        Ok(artist)
+    }
+}
 
 #[derive(Copy, Clone, Debug, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -28,6 +46,11 @@ pub struct ShallowArtist {
     pub role: ArtistType,
     pub picture: Option<String>,
 }
+impl IntoArtistId for ShallowArtist {
+    fn into_artist_id(&self) -> Id {
+        self.id
+    }
+}
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -42,18 +65,8 @@ pub struct Artist {
     pub artist_roles: Vec<ArtistRole>,
     pub spotlighted: bool,
 }
-impl Artist {
-    pub async fn get(id: Id, session: &mut Session) -> Result<Self, SessionError> {
-        let Some(oauth) = &mut session.oauth else {
-            Err(SessionError::NotLoggedInOauth)?
-        };
-        let path = format!("artists/{id}");
-        let resp = session
-            .client
-            .tidal_request(&path, &[], oauth, session.info.as_ref())
-            .await?;
-
-        let artist: Artist = resp.json().await?;
-        Ok(artist)
+impl IntoArtistId for Artist {
+    fn into_artist_id(&self) -> Id {
+        self.id
     }
 }

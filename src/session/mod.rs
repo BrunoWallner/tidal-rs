@@ -2,15 +2,16 @@
 use thiserror::Error;
 
 use crate::{
-    request::{Request, RequestError},
+    request::{ApiVersion, Request, RequestError, Response},
     session::auth::{AuthError, OAuth, OAuthUrl, TokenType},
 };
 
 pub mod auth;
-pub mod config;
-pub mod search;
+mod config;
+mod search;
 
 pub use config::*;
+pub use search::*;
 use serde::Deserialize;
 
 #[derive(Debug, Error)]
@@ -25,6 +26,8 @@ pub enum SessionError {
     NoSession,
     #[error("wrong token type")]
     WrongTokenType,
+    #[error("failed to decode manifest")]
+    ManifestDecode,
 }
 
 #[allow(dead_code)]
@@ -77,7 +80,7 @@ impl Session {
         }
         let response = self
             .client
-            .tidal_request("sessions", &[], oauth, None)
+            .tidal_request("sessions", &[], oauth, None, ApiVersion::V1)
             .await?;
         let info: Info = response.json().await?;
         self.info = Some(info);
@@ -90,6 +93,23 @@ impl Session {
         };
         auth::refresh_oauth_token(&self.client, oauth).await?;
         Ok(())
+    }
+
+    pub async fn request(
+        &mut self,
+        path: &str,
+        query: &[(&str, &str)],
+        api_version: ApiVersion,
+    ) -> Result<Response, SessionError> {
+        let Some(oauth) = &mut self.oauth else {
+            Err(SessionError::NotLoggedInOauth)?
+        };
+        let resp = self
+            .client
+            .tidal_request(&path, query, oauth, self.info.as_ref(), api_version)
+            .await?;
+
+        Ok(resp)
     }
 }
 
