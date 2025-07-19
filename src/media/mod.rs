@@ -1,10 +1,12 @@
 mod album;
 mod artist;
+mod favorites;
 mod stream;
 mod track;
 
 pub use album::*;
 pub use artist::*;
+pub use favorites::*;
 pub use stream::*;
 pub use track::*;
 
@@ -16,19 +18,14 @@ use serde::{
 };
 use std::fmt;
 
-// pub enum MimeType {
-//     AudioMpeg,
-//     AudioMp3,
-//     AudioMp4,
-//     AudioM4a,
-//     AudioFlac,
-//     AudioXflac,
-//     Audioeac3,
-//     AudioAc4,
-//     AudioM3u8,
-//     VideoMp4,
-//     VideoM38u,
-// }
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemList<T> {
+    pub limit: u32,
+    pub offset: u32,
+    pub total_number_of_items: u32,
+    pub items: Vec<T>,
+}
 
 #[derive(Clone, Debug, Deserialize)]
 pub enum MimeType {

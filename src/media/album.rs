@@ -15,6 +15,21 @@ impl IntoAlbumId for Id {
         *self
     }
 }
+impl IntoAlbumId for Track {
+    fn into_album_id(&self) -> Id {
+        self.album.id
+    }
+}
+impl IntoAlbumId for ShallowAlbum {
+    fn into_album_id(&self) -> Id {
+        self.id
+    }
+}
+impl IntoAlbumId for Album {
+    fn into_album_id(&self) -> Id {
+        self.id
+    }
+}
 
 /// Album extension
 impl Session {
@@ -36,7 +51,7 @@ impl Session {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShallowAlbum {
     pub id: Id,
@@ -45,13 +60,8 @@ pub struct ShallowAlbum {
     pub vibrant_color: Option<Color>,
     pub video_cover: Option<String>,
 }
-impl IntoAlbumId for ShallowAlbum {
-    fn into_album_id(&self) -> Id {
-        self.id
-    }
-}
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Album {
     pub id: Id,
@@ -79,11 +89,6 @@ pub struct Album {
     pub audio_modes: Vec<AudioMode>,
     pub artist: Option<ShallowArtist>,
     pub artists: Vec<ShallowArtist>,
-}
-impl IntoAlbumId for Album {
-    fn into_album_id(&self) -> Id {
-        self.id
-    }
 }
 
 #[derive(Debug, Deserialize)]

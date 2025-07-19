@@ -5,7 +5,7 @@ use serde::Deserialize;
 
 use crate::{
     Session,
-    media::{Album, Artist, Track},
+    media::{Album, Artist, ItemList, Track},
     request::ApiVersion,
     session::SessionError,
 };
@@ -51,42 +51,17 @@ impl fmt::Display for SearchType {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct SearchResultType<T> {
-    pub limit: u32,
-    pub offset: u32,
-    pub total_number_of_items: u32,
-    pub items: Vec<T>,
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
 pub struct SearchResult {
-    pub artists: Option<SearchResultType<Artist>>,
-    pub albums: Option<SearchResultType<Album>>,
-    pub tracks: Option<SearchResultType<Track>>,
-}
-impl SearchResult {
-    // set field to None, if it does not cotain any items
-    fn normalize(&mut self) {
-        fn normalize_field<T>(field: &mut Option<SearchResultType<T>>) {
-            if let Some(inner) = field {
-                if inner.total_number_of_items == 0 {
-                    *field = None;
-                }
-            }
-        }
-
-        normalize_field(&mut self.artists);
-        normalize_field(&mut self.albums);
-        normalize_field(&mut self.tracks);
-    }
+    pub artists: Option<ItemList<Artist>>,
+    pub albums: Option<ItemList<Album>>,
+    pub tracks: Option<ItemList<Track>>,
 }
 
 impl Session {
     pub async fn search(
         &mut self,
         query: &str,
-        models: SearchType,
+        types: SearchType,
         limit: u32,
         offset: u32,
     ) -> Result<SearchResult, SessionError> {
@@ -94,13 +69,12 @@ impl Session {
             ("query", query),
             ("limit", &format!("{limit}")),
             ("offset", &format!("{offset}")),
-            ("types", &format!("{models}")),
+            ("types", &format!("{types}")),
         ];
 
         let resp = self.request("search", params, ApiVersion::V1).await?;
 
-        let mut result: SearchResult = resp.json().await?;
-        result.normalize();
+        let result: SearchResult = resp.json().await?;
         Ok(result)
     }
 }

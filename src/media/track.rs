@@ -17,6 +17,11 @@ impl IntoTrackId for Id {
         *self
     }
 }
+impl IntoTrackId for TrackStreamResponse {
+    fn into_track_id(&self) -> Id {
+        self.track_id
+    }
+}
 
 /// Track extension
 impl Session {
@@ -30,11 +35,12 @@ impl Session {
     pub async fn get_track_stream<I: IntoTrackId>(
         &mut self,
         id: &I,
+        quality: AudioQuality,
     ) -> Result<TrackStream, SessionError> {
         let path = format!("tracks/{}/playbackinfo", id.into_track_id());
         let query = &[
             ("playbackmode", "STREAM"),
-            ("audioquality", self.config.audio_quality.into()),
+            ("audioquality", quality.into()),
             ("assetpresentation", "FULL"),
         ];
         let resp = self.request(&path, query, ApiVersion::V1).await?;
@@ -44,7 +50,7 @@ impl Session {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Track {
     pub id: Id,
@@ -93,11 +99,6 @@ struct TrackStreamResponse {
     track_peak_amplitude: f32,
     bit_depth: u8,
     sample_rate: u32,
-}
-impl IntoTrackId for TrackStreamResponse {
-    fn into_track_id(&self) -> Id {
-        self.track_id
-    }
 }
 
 #[derive(Clone, Debug, Deserialize)]

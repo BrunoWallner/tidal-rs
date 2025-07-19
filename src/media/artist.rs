@@ -1,4 +1,9 @@
-use crate::{Session, media::Id, request::ApiVersion, session::SessionError};
+use crate::{
+    Session,
+    media::{Album, Id, ItemList},
+    request::ApiVersion,
+    session::SessionError,
+};
 use serde::Deserialize;
 
 pub trait IntoArtistId {
@@ -18,6 +23,16 @@ impl Session {
         let artist: Artist = resp.json().await?;
         Ok(artist)
     }
+
+    pub async fn get_artist_albums<I: IntoArtistId>(
+        &mut self,
+        id: &I,
+    ) -> Result<ItemList<Album>, SessionError> {
+        let path = format!("artists/{}/albums", id.into_artist_id());
+        let resp = self.request(&path, &[], ApiVersion::V1).await?;
+        let albums: ItemList<Album> = resp.json().await?;
+        Ok(albums)
+    }
 }
 
 #[derive(Copy, Clone, Debug, Deserialize)]
@@ -29,14 +44,14 @@ pub enum ArtistType {
     Artist,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ArtistRole {
     pub category_id: i32,
     pub category: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ShallowArtist {
     pub id: Id,
@@ -52,7 +67,7 @@ impl IntoArtistId for ShallowArtist {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Artist {
     pub id: Id,

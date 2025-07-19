@@ -7,10 +7,10 @@ use crate::{
 };
 
 pub mod auth;
-mod config;
+// mod config;
 mod search;
 
-pub use config::*;
+// pub use config::*;
 pub use search::*;
 use serde::Deserialize;
 
@@ -32,7 +32,7 @@ pub enum SessionError {
 
 #[allow(dead_code)]
 pub struct Session {
-    pub config: config::Config,
+    // pub config: config::Config,
     pub(crate) client: Request,
 
     pub info: Option<Info>,
@@ -40,12 +40,12 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(config: config::Config) -> Self {
+    pub fn new() -> Self {
         let client = reqwest::Client::new();
         let client = Request::new(client);
 
         Session {
-            config,
+            // config,
             client,
             info: None,
             oauth: None,

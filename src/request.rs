@@ -11,11 +11,14 @@ use crate::session::{
 
 const USER_AGENT: &'static str = "Mozilla/5.0 (Linux; Android 12; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/91.0.4472.114 Safari/537.36";
 
+pub const CLIENT_ID: &str = "zU4XHVVkc2tDPo4t";
+pub const CLIENT_SECRET: &str = "VJKhDFqJPqvsPVNBV6ukXTJmwlvbttP7wlMlrc72se4=";
+// pub const CLIENT_ID: &str = "7m7Ap0JC9j1cOM3n";
+// pub const CLIENT_SECRET: &str = "vRAdA108tlvkJpTsGZS8rGZ7xTlbJ0qaZ2K9saEzsgY=";
+
 pub(super) const API_OAUTH2_DEV_AUTH_URL: &str =
     "https://auth.tidal.com/v1/oauth2/device_authorization";
 pub const API_OAUTH2_URL: &str = "https://auth.tidal.com/v1/oauth2/token";
-pub const CLIENT_ID: &str = "zU4XHVVkc2tDPo4t";
-pub const CLIENT_SECRET: &str = "VJKhDFqJPqvsPVNBV6ukXTJmwlvbttP7wlMlrc72se4=";
 pub const API_URL: &str = "https://api.tidal.com";
 
 #[derive(Copy, Clone, Debug)]
@@ -60,7 +63,7 @@ impl Display for RequestError {
 }
 impl std::fmt::Debug for RequestError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self) // reuse Display logic
+        write!(f, "{}", self)
     }
 }
 
